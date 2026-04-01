@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagrama de Flujo · Análisis Fundamental v3.0</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090e;--s1:#0d1117;--s2:#131920;--s3:#1a2130;--s4:#212b3a;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.13);--txt:#e4eaf4;--mut:#5e7394;--acc:#00e5a0;--acc2:#4a9eff;--red:#ff4757;--yel:#f5c518;--pur:#a78bfa;--ora:#fb8f44;--fn:'Bebas Neue',cursive}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;scroll-behavior:smooth}
+body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,160,.012) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,160,.012) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0}
+.header{position:sticky;top:0;z-index:100;background:rgba(7,9,14,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--bd);padding:0 28px;height:52px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.hd-brand{display:flex;align-items:center;gap:10px}
+.hd-logo{width:28px;height:28px;background:var(--acc);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#000}
+.hd-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.06em}
+.hd-title em{color:var(--acc);font-style:normal}
+.hd-pills{display:flex;gap:6px;flex-wrap:wrap}
+.hd-pill{padding:3px 10px;border-radius:20px;font-size:.62rem;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.04em;border:1px solid}
+.hd-back{padding:5px 14px;border-radius:6px;background:transparent;border:1px solid var(--bd2);color:var(--mut);font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .15s}
+.hd-back:hover{border-color:var(--acc);color:var(--acc)}
+.main{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:32px 28px 80px}
+.phase-label{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.phase-num{font-family:var(--fn);font-size:2.2rem;line-height:1;letter-spacing:.04em;color:var(--acc);min-width:36px}
+.phase-title{font-family:'Syne',sans-serif;font-size:.92rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.phase-sub{font-size:.67rem;color:var(--mut);margin-top:2px}
+.connector{display:flex;align-items:center;justify-content:center;height:40px;color:var(--mut);font-size:.7rem;position:relative}
+.connector::before{content:'';position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--bd2);transform:translateX(-50%)}
+.connector span{background:var(--bg);padding:0 10px;position:relative;z-index:1}
+.fc{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:18px 20px;margin-bottom:10px;transition:border-color .2s}
+.fc:hover{border-color:var(--bd2)}
+.fc.fc-acc{border-left:3px solid var(--acc)}.fc.fc-blue{border-left:3px solid var(--acc2)}.fc.fc-red{border-left:3px solid var(--red)}.fc.fc-yel{border-left:3px solid var(--yel)}.fc.fc-pur{border-left:3px solid var(--pur)}.fc.fc-ora{border-left:3px solid var(--ora)}
+.fc-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.fc-icon{font-size:1.1rem;flex-shrink:0}
+.fc-title{font-family:'Syne',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.04em}
+.fc-badge{margin-left:auto;padding:2px 8px;border-radius:4px;font-size:.6rem;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.05em;white-space:nowrap}
+.fc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.fc-item{background:var(--s3);border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
+.fc-item-head{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.fc-item-name{font-family:'Syne',sans-serif;font-size:.72rem;font-weight:700}
+.fc-item-metrics{font-size:.64rem;color:var(--mut);line-height:1.6}
+.fc-item-metrics strong{color:var(--txt)}
+.fc-note{font-size:.68rem;color:var(--mut);line-height:1.6;padding:8px 12px;background:var(--s3);border-radius:6px;border-left:2px solid var(--acc2);margin-top:10px}
+.fc-note strong{color:var(--acc2)}
+.upload-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.up-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.up-num{font-family:var(--fn);font-size:1.4rem;color:var(--acc);line-height:1}
+.up-title{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700}
+.up-desc{font-size:.64rem;color:var(--mut);line-height:1.55}
+.up-tag{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:4px;font-size:.59rem;font-family:'Syne',sans-serif;font-weight:700;border:1px solid;width:fit-content;margin-top:2px}
+.mods-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+.mod-card{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:14px;overflow:hidden;position:relative}
+.mod-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.mc-acc::before{background:var(--acc)}.mc-blue::before{background:var(--acc2)}.mc-red::before{background:var(--red)}.mc-yel::before{background:var(--yel)}.mc-pur::before{background:var(--pur)}.mc-ora::before{background:var(--ora)}.mc-teal::before{background:#00d4d4}.mc-pink::before{background:#ff6b9d}
+.mod-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.mod-num{font-family:var(--fn);font-size:1.1rem;color:var(--mut)}
+.mod-title{font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;flex:1}
+.mod-weight{padding:1px 7px;border-radius:3px;font-size:.6rem;font-family:'Syne',sans-serif;font-weight:700;background:var(--s4);color:var(--mut);border:1px solid var(--bd)}
+.mod-metrics{font-size:.63rem;color:var(--mut);line-height:1.7}
+.mod-metrics strong{color:var(--txt)}
+.mod-veto{margin-top:7px;padding:5px 8px;background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);border-radius:5px;font-size:.61rem;color:var(--red);line-height:1.5}
+.profiles-band{display:flex;flex-wrap:wrap;gap:8px}
+.prof-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--bd);font-size:.68rem;transition:all .15s}
+.prof-chip:hover{border-color:var(--bd2);background:var(--s3)}
+.prof-name{font-family:'Syne',sans-serif;font-size:.68rem;font-weight:700}
+.prof-phil{font-size:.58rem;color:var(--mut)}
+.formula-box{background:var(--s2);border:1px solid var(--bd2);border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.formula-part{display:flex;flex-direction:column;align-items:center;gap:3px}
+.fp-val{font-family:var(--fn);font-size:1.8rem;letter-spacing:.04em}
+.fp-lbl{font-size:.6rem;color:var(--mut);letter-spacing:.07em;text-transform:uppercase}
+.formula-op{font-family:var(--fn);font-size:1.6rem;color:var(--mut)}
+.ai-callout{background:linear-gradient(135deg,rgba(0,229,160,.06),rgba(74,158,255,.04));border:1px solid rgba(0,229,160,.2);border-radius:12px;padding:18px 20px;display:flex;gap:14px;align-items:flex-start}
+.ai-icon{font-size:1.8rem;flex-shrink:0}
+.ai-title{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;margin-bottom:6px}
+.ai-body{font-size:.7rem;color:var(--mut);line-height:1.7}
+.ai-body strong{color:var(--txt)}
+.ai-steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.ai-step{padding:4px 10px;border-radius:6px;background:var(--s3);border:1px solid var(--bd);font-size:.63rem;color:var(--txt);display:flex;align-items:center;gap:5px}
+.ai-step-num{width:16px;height:16px;border-radius:50%;background:var(--acc);color:#000;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:700;flex-shrink:0}
+.skills-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-top:10px}
+.sk-card{background:var(--s3);border:1px solid var(--bd);border-radius:9px;padding:12px 14px}
+.sk-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.sk-title{font-family:'Syne',sans-serif;font-size:.74rem;font-weight:700}
+.sk-tag{margin-left:auto;padding:1px 7px;border-radius:3px;font-size:.58rem;font-family:'Syne',sans-serif;font-weight:700;background:rgba(0,229,160,.1);color:var(--acc);border:1px solid rgba(0,229,160,.3)}
+.sk-body{font-size:.63rem;color:var(--mut);line-height:1.65}
+.sk-body strong{color:var(--txt)}
+.legend{display:flex;gap:16px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:.65rem;color:var(--mut)}
+.leg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+@media(max-width:768px){.fc-grid,.mods-grid{grid-template-columns:1fr}.upload-grid{grid-template-columns:1fr 1fr}.main{padding:20px 14px 60px}.hd-pills{display:none}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="hd-brand">
+    <a href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px">
+      <div class="hd-logo">M</div>
+      <div class="hd-title">BOSTGARA &middot; <em>Diagrama de An&aacute;lisis v3.0</em></div>
+    </a>
+  </div>
+  <div class="hd-pills">
+    <span class="hd-pill" style="background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--acc)">v3.0 &mdash; con IA</span>
+    <span class="hd-pill" style="background:rgba(74,158,255,.08);border-color:rgba(74,158,255,.25);color:var(--acc2)">10 Perfiles</span>
+    <span class="hd-pill" style="background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.25);color:var(--pur)">DCF + Monte Carlo</span>
+    <span class="hd-pill" style="background:rgba(245,197,24,.08);border-color:rgba(245,197,24,.25);color:var(--yel)">PDF Informe Analista</span>
+  </div>
+  <a href="analisis.html" class="hd-back">&larr; Motor de An&aacute;lisis</a>
+</header>
+<div class="main">
+
+<div class="phase-label"><div class="phase-num">00</div><div class="phase-info"><div class="phase-title">Preparaci&oacute;n de Inputs</div><div class="phase-sub">Qu&eacute; debes reunir antes de ejecutar el an&aacute;lisis</div></div></div>
+<div class="fc fc-acc">
+  <div class="fc-head"><span class="fc-icon">&#128194;</span><span class="fc-title">Archivos de entrada al motor</span><span class="fc-badge" style="background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);color:var(--acc)">4 INPUTS</span></div>
+  <div class="upload-grid">
+    <div class="up-card"><div class="up-num">&#9312;</div><div class="up-title">CSV M&eacute;tricas</div><div class="up-desc">Archivo con todas las m&eacute;tricas financieras. Formato: <code>slug;valor;descripci&oacute;n</code>. Fuente: Morningstar, Simply Wall St, Wisesheets.</div><span class="up-tag" style="background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--acc)">&#10022; OBLIGATORIO</span></div>
+    <div class="up-card"><div class="up-num">&#9313;</div><div class="up-title">Excel Sector</div><div class="up-desc">Comparativa de peers: Market View, Risk, Returns, Efficiency, Projections. Mejora M&oacute;dulo M6 y benchmarking de competidores directos.</div><span class="up-tag" style="background:rgba(74,158,255,.08);border-color:rgba(74,158,255,.25);color:var(--acc2)">opcional</span></div>
+    <div class="up-card"><div class="up-num">&#9314;</div><div class="up-title">Imagen Ingresos</div><div class="up-desc">Gr&aacute;fico de evoluci&oacute;n hist&oacute;rica de ingresos y m&aacute;rgenes (JPG/PNG). Se incluye en el informe HTML exportado.</div><span class="up-tag" style="background:rgba(74,158,255,.08);border-color:rgba(74,158,255,.25);color:var(--acc2)">opcional</span></div>
+    <div class="up-card" style="border-color:rgba(167,139,250,.25)"><div class="up-num" style="color:var(--pur)">&#9315;</div><div class="up-title">PDF Informe Analista</div><div class="up-desc">Informe de Morningstar, Goldman, Reuters, etc. La IA lo lee e integra al an&aacute;lisis narrativo, destacando qu&eacute; aporta o contradice el cuantitativo.</div><span class="up-tag" style="background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.3);color:var(--pur)">&#10024; nuevo &middot; IA</span></div>
+  </div>
+  <div class="fc-note"><strong>Ticker Yahoo Finance:</strong> Introduce el s&iacute;mbolo exacto. Ej: <code>AAPL</code>, <code>MC.PA</code>, <code>SAN.MC</code>. El motor detecta el sector autom&aacute;ticamente y ajusta todos los umbrales.</div>
+</div>
+
+<div class="connector"><span>&#9660; an&aacute;lisis cuantitativo</span></div>
+
+<div class="phase-label"><div class="phase-num">01</div><div class="phase-info"><div class="phase-title">Filtro M0 &mdash; Integridad Contable</div><div class="phase-sub">Vetos absolutos &middot; eliminaci&oacute;n inmediata si falla cualquiera</div></div></div>
+<div class="fc fc-red">
+  <div class="fc-head"><span class="fc-icon">&#128680;</span><span class="fc-title">Vetos cuantitativos absolutos &mdash; KNOCK-OUT</span><span class="fc-badge" style="background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.3);color:var(--red)">5 VETOS</span></div>
+  <div class="fc-grid">
+    <div class="fc-item"><div class="fc-item-head"><span>&#128308;</span><span class="fc-item-name">Beneish M-Score</span></div><div class="fc-item-metrics"><strong>Veto si &gt; -1.78</strong><br>Indicador de manipulaci&oacute;n contable. Combina 8 ratios. Por encima del umbral = posible fraude contable.</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128308;</span><span class="fc-item-name">Altman Z-Score</span></div><div class="fc-item-metrics"><strong>Veto si &lt; 1.81</strong><br>Predictor de quiebra. Z &lt; 1.81 = zona de distress. Z &gt; 2.99 = zona segura.</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128308;</span><span class="fc-item-name">Interest Coverage</span></div><div class="fc-item-metrics"><strong>Veto si &lt; 1.0x</strong><br>La empresa no genera suficiente EBIT para cubrir sus gastos financieros. Insolvencia t&eacute;cnica.</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128308;</span><span class="fc-item-name">Current Ratio</span></div><div class="fc-item-metrics"><strong>Veto si &lt; 0.8x</strong><br>Activos corrientes insuficientes para cubrir pasivos corrientes. Riesgo de impago a corto plazo.</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128308;</span><span class="fc-item-name">Net Debt/EBITDA</span></div><div class="fc-item-metrics"><strong>Veto si &gt; 7.0x</strong><br>Apalancamiento extremo. M&aacute;s de 7 a&ntilde;os de EBITDA para pagar la deuda neta.</div></div>
+  </div>
+  <div class="fc-note">Si cualquier veto se activa &rarr; <strong style="color:var(--red)">Score m&aacute;ximo = 40%</strong> para todos los perfiles. El an&aacute;lisis contin&uacute;a pero la se&ntilde;al es NO COMPRAR salvo tesis contrarian muy espec&iacute;fica.</div>
+</div>
+
+<div class="connector"><span>&#9660; si pasa M0</span></div>
+
+<div class="phase-label"><div class="phase-num">02</div><div class="phase-info"><div class="phase-title">M&oacute;dulos M1&ndash;M9 &mdash; An&aacute;lisis Cuantitativo</div><div class="phase-sub">9 m&oacute;dulos &middot; pesos variables por perfil &middot; umbrales ajustados por sector</div></div></div>
+<div class="fc fc-blue" style="margin-bottom:10px">
+  <div class="fc-head"><span class="fc-icon">&#9881;&#65039;</span><span class="fc-title">Ajuste sectorial autom&aacute;tico &mdash; 8 sectores</span></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#9881;&#65039; Tech/Software</span>
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#128138; Salud/Pharma</span>
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#9889; Utilities</span>
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#127968; Financiero</span>
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#128717; Consumo</span>
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#127981; Industrial</span>
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#127970; REIT</span>
+    <span style="padding:3px 9px;border-radius:5px;background:var(--s3);border:1px solid var(--bd);font-size:.65rem">&#127758; General</span>
+  </div>
+  <div class="fc-note">Los umbrales de ROIC, m&aacute;rgenes, deuda y valoraci&oacute;n se ajustan seg&uacute;n el sector detectado. Un Net Debt/EBITDA de 5x es aceptable para Utilities pero cr&iacute;tico en Tech.</div>
+</div>
+<div class="mods-grid">
+  <div class="mod-card mc-acc"><div class="mod-head"><span class="mod-num">M1</span><span class="mod-title">Rentabilidad</span><span class="mod-weight">15&ndash;28%</span></div><div class="mod-metrics"><strong>ROIC, ROE, ROA</strong> &middot; Margen bruto &middot; Margen EBITDA &middot; Margen neto &middot; FCF Margin &middot; <strong>Piotroski F-Score</strong> &middot; WACC &middot; Spread ROIC-WACC &middot; Asset Turnover &middot; CapEx/Revenue</div><div class="mod-veto">Clave: ROIC &gt; WACC &rarr; crea valor econ&oacute;mico real</div></div>
+  <div class="mod-card mc-blue"><div class="mod-head"><span class="mod-num">M2</span><span class="mod-title">Crecimiento</span><span class="mod-weight">5&ndash;30%</span></div><div class="mod-metrics"><strong>Revenue CAGR 3y/5y/10y</strong> &middot; EPS CAGR &middot; FCF CAGR &middot; EBITDA CAGR &middot; Revisiones analistas 90d &middot; <strong>Revenue proyectado 5y</strong> &middot; Momentum de revisiones</div></div>
+  <div class="mod-card mc-ora"><div class="mod-head"><span class="mod-num">M3</span><span class="mod-title">Calidad Financiera</span><span class="mod-weight">10&ndash;22%</span></div><div class="mod-metrics"><strong>FCF/Net Income</strong> &middot; FCF/OCF &middot; <strong>Beneish M-Score</strong> &middot; Montier C-Score &middot; Sloan Ratio (accruals) &middot; Diluci&oacute;n acciones 5y &middot; Buyback Yield &middot; ROIC CAGR 5y</div><div class="mod-veto">FCF &gt; 85% NI &rarr; alta calidad contable</div></div>
+  <div class="mod-card mc-red"><div class="mod-head"><span class="mod-num">M4</span><span class="mod-title">Riesgo y Deuda</span><span class="mod-weight">10&ndash;20%</span></div><div class="mod-metrics"><strong>Altman Z-Score</strong> &middot; <strong>Net Debt/EBITDA</strong> &middot; Debt/Equity &middot; Interest Coverage (EBIT y EBITDA) &middot; OCF/Deuda &middot; DOL &middot; DCL &middot; Beta 5y &middot; Equity/Assets</div></div>
+  <div class="mod-card mc-yel"><div class="mod-head"><span class="mod-num">M5</span><span class="mod-title">Liquidez</span><span class="mod-weight">5&ndash;12%</span></div><div class="mod-metrics"><strong>Current Ratio</strong> &middot; Quick Ratio &middot; Cash Ratio &middot; OCF/Pasivos corrientes &middot; NWC Margin &middot; Price/NCAV (Graham) &middot; Cash Conversion Cycle</div></div>
+  <div class="mod-card mc-pur"><div class="mod-head"><span class="mod-num">M6</span><span class="mod-title">Valoraci&oacute;n Relativa</span><span class="mod-weight">8&ndash;15%</span></div><div class="mod-metrics"><strong>PER Fwd/LTM</strong> &middot; PEG &middot; <strong>EV/EBITDA</strong> &middot; EV/EBIT &middot; EV/FCF &middot; P/Book &middot; P/FCF &middot; FCF Yield &middot; Shareholder Yield &middot; Graham Number &middot; Consenso analistas &middot; Comparaci&oacute;n hist&oacute;rica 3&ndash;5y</div><div class="mod-veto">&#10024; Mejorado con Excel sector &rarr; benchmarking vs. peers directos</div></div>
+  <div class="mod-card mc-acc"><div class="mod-head"><span class="mod-num">M7</span><span class="mod-title">Valoraci&oacute;n Intr&iacute;nseca</span><span class="mod-weight">7&ndash;15%</span></div><div class="mod-metrics"><strong>DCF Upside</strong> &middot; <strong>Fair Value Upside</strong> (Morningstar) &middot; DDM Fair Value &middot; EPV (Earnings Power Value) &middot; Comps Upside &middot; Fair Value Confidence &middot; Margen de seguridad</div><div class="mod-veto">&#10024; Tab DCF dedicado: tabla de modelos + sensibilidad WACC vs Crecimiento</div></div>
+  <div class="mod-card mc-pink"><div class="mod-head"><span class="mod-num">M8</span><span class="mod-title">Dividendos</span><span class="mod-weight">0&ndash;20%</span></div><div class="mod-metrics"><strong>Dividend Yield</strong> &middot; FCF Payout Ratio &middot; EPS Payout Ratio &middot; Dividend CAGR 5y &middot; Dividend Streak &middot; Dividend Growth &middot; Sostenibilidad &middot; Dividend Aristocrat check</div><div class="mod-veto">Yield &gt; 8% &rarr; posible trampa. Payout &gt; 100% FCF &rarr; insostenible</div></div>
+  <div class="mod-card mc-teal"><div class="mod-head"><span class="mod-num">M9</span><span class="mod-title">Momentum</span><span class="mod-weight">0&ndash;5%</span></div><div class="mod-metrics">Momentum precio 6m/1y &middot; <strong>Revisiones EPS 90d</strong> &middot; % revisiones positivas &middot; Aceleraci&oacute;n de revisiones &middot; Relative strength vs &iacute;ndice sector</div></div>
+</div>
+
+<div class="connector"><span>&#9660; pesos por perfil &rarr; score cuantitativo</span></div>
+
+<div class="phase-label"><div class="phase-num">03</div><div class="phase-info"><div class="phase-title">Skills Anal&iacute;ticos Avanzados</div><div class="phase-sub">DCF &middot; Monte Carlo &middot; Sensibilidad &middot; Ratios &middot; Sector benchmarking</div></div></div>
+<div class="fc fc-pur">
+  <div class="fc-head"><span class="fc-icon">&#129518;</span><span class="fc-title">Motor de valoraci&oacute;n avanzada &mdash; Skills instalados</span><span class="fc-badge" style="background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.3);color:var(--pur)">3 SKILLS</span></div>
+  <div class="skills-grid">
+    <div class="sk-card"><div class="sk-head"><span>&#128208;</span><span class="sk-title">Financial Models</span><span class="sk-tag">DCF &middot; MC</span></div><div class="sk-body"><strong>DCF completo</strong> con WACC, terminal value, crecimiento por fases. <strong>Sensibilidad</strong> (WACC &plusmn;2% &times; Rev CAGR &plusmn;3%) &rarr; matriz de upsides. <strong>Monte Carlo</strong> con distribuciones probabilistas. Escenarios Bull/Base/Bear ponderados.</div></div>
+    <div class="sk-card"><div class="sk-head"><span>&#128202;</span><span class="sk-title">Financial Statements</span><span class="sk-tag">Ratios</span></div><div class="sk-body">C&aacute;lculo e interpretaci&oacute;n de <strong>50+ ratios financieros</strong>: rentabilidad, liquidez, apalancamiento, eficiencia, valoraci&oacute;n. Comparativa benchmarks sectoriales. An&aacute;lisis de tendencias multi-per&iacute;odo.</div></div>
+    <div class="sk-card"><div class="sk-head"><span>&#127942;</span><span class="sk-title">Sector Comparison</span><span class="sk-tag">Peers</span></div><div class="sk-body">Lectura del <strong>Excel sectorial</strong> (Market View, Risk, Returns, Efficiency). Tabla comparativa peers con ranking por m&uacute;ltiplos clave. Identifica prima o descuento vs. competidores directos.</div></div>
+  </div>
+</div>
+
+<div class="connector"><span>&#9660; 10 perfiles simult&aacute;neos</span></div>
+
+<div class="phase-label"><div class="phase-num">04</div><div class="phase-info"><div class="phase-title">10 Perfiles de Inversor</div><div class="phase-sub">An&aacute;lisis en paralelo con pesos propios por m&oacute;dulo</div></div></div>
+<div class="fc fc-acc">
+  <div class="fc-head"><span class="fc-icon">&#128100;</span><span class="fc-title">Perfiles analizados en paralelo</span></div>
+  <div class="profiles-band">
+    <div class="prof-chip"><span>&#128218;</span><div><div class="prof-name">Value Cl&aacute;sico</div><div class="prof-phil">Graham / Dodd</div></div></div>
+    <div class="prof-chip"><span>&#127942;</span><div><div class="prof-name">Quality/Compounding</div><div class="prof-phil">Buffett / Munger</div></div></div>
+    <div class="prof-chip"><span>&#9878;&#65039;</span><div><div class="prof-name">GARP</div><div class="prof-phil">Lynch / Neff</div></div></div>
+    <div class="prof-chip"><span>&#128640;</span><div><div class="prof-name">Growth Acelerado</div><div class="prof-phil">Fisher / Wood</div></div></div>
+    <div class="prof-chip"><span>&#127807;</span><div><div class="prof-name">Small/Mid Cap</div><div class="prof-phil">Lynch / Schloss</div></div></div>
+    <div class="prof-chip"><span>&#128181;</span><div><div class="prof-name">Dividendo Estable</div><div class="prof-phil">Lowell Miller</div></div></div>
+    <div class="prof-chip"><span>&#128200;</span><div><div class="prof-name">Dividend Growth</div><div class="prof-phil">Chowder / Connolly</div></div></div>
+    <div class="prof-chip"><span>&#128269;</span><div><div class="prof-name">Deep Value</div><div class="prof-phil">Graham / Schloss</div></div></div>
+    <div class="prof-chip"><span>&#128737;&#65039;</span><div><div class="prof-name">Defensivo</div><div class="prof-phil">Klarman / Neff</div></div></div>
+    <div class="prof-chip"><span>&#128142;</span><div><div class="prof-name">Income + Growth</div><div class="prof-phil">O'Neil / Dreman</div></div></div>
+  </div>
+  <div class="fc-note">Cada perfil tiene su vector de pesos para los 9 m&oacute;dulos. Value pondera m&aacute;s M1 y M4. Growth pondera m&aacute;s M2. Los veredictos son independientes por perfil.</div>
+</div>
+
+<div class="connector"><span>&#9660; score 80% cuant. + 20% checklist</span></div>
+
+<div class="phase-label"><div class="phase-num">05</div><div class="phase-info"><div class="phase-title">F&oacute;rmula del Score Final</div><div class="phase-sub">Cuantitativo (80%) + Checklist cualitativo (20%)</div></div></div>
+<div class="fc fc-yel">
+  <div class="fc-head"><span class="fc-icon">&#129518;</span><span class="fc-title">C&aacute;lculo del veredicto por perfil</span></div>
+  <div class="formula-box">
+    <div class="formula-part"><div class="fp-val" style="color:var(--acc2)">80%</div><div class="fp-lbl">9 m&oacute;dulos cuant.</div></div>
+    <div class="formula-op">&times;</div>
+    <div class="formula-part"><div class="fp-val" style="color:var(--acc2)">Score M1-M9</div><div class="fp-lbl">ponderado por perfil</div></div>
+    <div class="formula-op">+</div>
+    <div class="formula-part"><div class="fp-val" style="color:var(--yel)">20%</div><div class="fp-lbl">checklist 53 preguntas</div></div>
+    <div class="formula-op">&times;</div>
+    <div class="formula-part"><div class="fp-val" style="color:var(--yel)">Score S1-S8</div><div class="fp-lbl">ponderado por perfil</div></div>
+    <div class="formula-op">=</div>
+    <div class="formula-part"><div class="fp-val" style="color:var(--acc)">Score Final</div><div class="fp-lbl">0&ndash;100%</div></div>
+  </div>
+  <div style="margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+    <div style="background:rgba(0,229,160,.08);border:1px solid rgba(0,229,160,.2);border-radius:7px;padding:10px;text-align:center"><div style="font-family:var(--fn);font-size:1.4rem;color:var(--acc)">&ge; 70%</div><div style="font-size:.65rem;color:var(--acc);font-weight:700;margin-top:2px">COMPRAR</div><div style="font-size:.6rem;color:var(--mut);margin-top:3px">Fundamentales s&oacute;lidos &middot; precio atractivo</div></div>
+    <div style="background:rgba(245,197,24,.08);border:1px solid rgba(245,197,24,.2);border-radius:7px;padding:10px;text-align:center"><div style="font-family:var(--fn);font-size:1.4rem;color:var(--yel)">50&ndash;69%</div><div style="font-size:.65rem;color:var(--yel);font-weight:700;margin-top:2px">WATCHLIST</div><div style="font-size:.6rem;color:var(--mut);margin-top:3px">Vigilar &middot; esperar catal&iacute;zador o correcci&oacute;n</div></div>
+    <div style="background:rgba(255,71,87,.08);border:1px solid rgba(255,71,87,.2);border-radius:7px;padding:10px;text-align:center"><div style="font-family:var(--fn);font-size:1.4rem;color:var(--red)">&lt; 50%</div><div style="font-size:.65rem;color:var(--red);font-weight:700;margin-top:2px">NO COMPRAR</div><div style="font-size:.6rem;color:var(--mut);margin-top:3px">Fundamentales d&eacute;biles o valoraci&oacute;n excesiva</div></div>
+  </div>
+</div>
+
+<div class="connector"><span>&#9660; checklist cualitativo</span></div>
+
+<div class="phase-label"><div class="phase-num">06</div><div class="phase-info"><div class="phase-title">Checklist Cualitativo &mdash; 8 Secciones &middot; 53 Preguntas</div><div class="phase-sub">S&iacute; / No / No s&eacute; &middot; Preguntas cr&iacute;ticas marcan veto cualitativo</div></div></div>
+<div class="fc fc-acc">
+  <div class="fc-head"><span class="fc-icon">&#128203;</span><span class="fc-title">Secciones del checklist</span></div>
+  <div class="fc-grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+    <div class="fc-item"><div class="fc-item-head"><span>&#128084;</span><span class="fc-item-name">S1 &middot; Equipo Directivo</span></div><div class="fc-item-metrics">CEO, skin-in-the-game, insider buying, asignaci&oacute;n capital, gobierno corporativo, esc&aacute;ndalos</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#127984;</span><span class="fc-item-name">S2 &middot; Ventaja Competitiva</span></div><div class="fc-item-metrics">Pricing power, efecto red, switching costs, activos intangibles, ventajas de coste estructurales</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#127919;</span><span class="fc-item-name">S3 &middot; Posici&oacute;n Sectorial</span></div><div class="fc-item-metrics">Cuota de mercado, crecimiento TAM, no declive estructural, concentraci&oacute;n clientes/proveedores</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128260;</span><span class="fc-item-name">S4 &middot; Calidad Ingresos</span></div><div class="fc-item-metrics">Recurrencia, NRR &gt; 100%, churn bajo, diversificaci&oacute;n geogr&aacute;fica, crecimiento org&aacute;nico</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#9878;&#65039;</span><span class="fc-item-name">S5 &middot; Riesgos Regulatorios</span></div><div class="fc-item-metrics">Estabilidad pol&iacute;tica, antimonopolio, subsidios, exposici&oacute;n divisas, cadena suministro</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#127968;</span><span class="fc-item-name">S6 &middot; Deuda Detallada</span></div><div class="fc-item-metrics">Vencimientos, tipo fijo/variable, moneda, l&iacute;neas de cr&eacute;dito, estr&eacute;s -30% ingresos</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128197;</span><span class="fc-item-name">S7 &middot; Ciclo y Timing</span></div><div class="fc-item-metrics">Fase del ciclo, resiliencia 2008/2020, catal&iacute;zadores positivos y negativos pr&oacute;ximos</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#129504;</span><span class="fc-item-name">S8 &middot; Comprensi&oacute;n</span></div><div class="fc-item-metrics">Modelo de negocio, informe anual, earnings call, 3 riesgos clave, tesis clara, precio objetivo</div></div>
+  </div>
+  <div class="fc-note">5 preguntas son <strong style="color:var(--red)">CR&Iacute;TICAS</strong>: responder NO baja autom&aacute;ticamente el veredicto una categor&iacute;a para todos los perfiles.</div>
+</div>
+
+<div class="connector"><span>&#9660; an&aacute;lisis narrativo con IA</span></div>
+
+<div class="phase-label"><div class="phase-num">07</div><div class="phase-info"><div class="phase-title">An&aacute;lisis IA &mdash; Claude Sonnet</div><div class="phase-sub">S&iacute;ntesis narrativa &middot; tesis &middot; riesgos &middot; catal&iacute;zadores &middot; integraci&oacute;n PDF</div></div></div>
+<div class="ai-callout">
+  <div class="ai-icon">&#129302;</div>
+  <div style="flex:1">
+    <div class="ai-title">Motor de S&iacute;ntesis IA con Claude Sonnet</div>
+    <div class="ai-body">El an&aacute;lisis cuantitativo genera n&uacute;meros. La IA los convierte en <strong>narrativa de inversi&oacute;n profesional</strong>. Si se adjunta un <strong>PDF de informe externo</strong>, la IA lo lee, eval&uacute;a su calidad y determina si contradice o complementa los datos cuantitativos.</div>
+    <div class="ai-steps">
+      <div class="ai-step"><span class="ai-step-num">1</span>Lee scores M0&ndash;M9</div>
+      <div class="ai-step"><span class="ai-step-num">2</span>Analiza PDF adjunto</div>
+      <div class="ai-step"><span class="ai-step-num">3</span>Redacta tesis de inversi&oacute;n</div>
+      <div class="ai-step"><span class="ai-step-num">4</span>Identifica riesgos no cuantificables</div>
+      <div class="ai-step"><span class="ai-step-num">5</span>Propone catal&iacute;zadores 12&ndash;24m</div>
+      <div class="ai-step"><span class="ai-step-num">6</span>Sintetiza valoraci&oacute;n narrativa</div>
+      <div class="ai-step"><span class="ai-step-num">7</span>Veredicto con precio objetivo</div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><span>&#9660; descarga y archivado</span></div>
+
+<div class="phase-label"><div class="phase-num">08</div><div class="phase-info"><div class="phase-title">Outputs y Archivado</div><div class="phase-sub">Informe HTML &middot; CSV m&eacute;tricas &middot; PDF analista &middot; selector de carpeta nativo</div></div></div>
+<div class="fc fc-acc">
+  <div class="fc-head"><span class="fc-icon">&#128230;</span><span class="fc-title">Bundle de descarga &mdash; elige carpeta de destino</span><span class="fc-badge" style="background:rgba(0,229,160,.12);border:1px solid rgba(0,229,160,.3);color:var(--acc)">File System API</span></div>
+  <div class="fc-grid">
+    <div class="fc-item"><div class="fc-item-head"><span>&#128196;</span><span class="fc-item-name">Informe HTML</span></div><div class="fc-item-metrics">Documento aut&oacute;nomo con todos los perfiles, m&oacute;dulos, razonamiento, an&aacute;lisis IA y gr&aacute;fico. CSS embebido. Abre en cualquier navegador sin dependencias.</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128202;</span><span class="fc-item-name">CSV M&eacute;tricas</span></div><div class="fc-item-metrics">Exportaci&oacute;n de las m&eacute;tricas utilizadas. Formato slug;valor;descripci&oacute;n. Reutilizable en an&aacute;lisis futuros o para tracking hist&oacute;rico de la tesis.</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128209;</span><span class="fc-item-name">PDF Adjunto</span></div><div class="fc-item-metrics">Re-exporta el PDF del analista externo junto al informe para archivado completo. Solo si fue adjuntado en inputs.</div></div>
+    <div class="fc-item"><div class="fc-item-head"><span>&#128202;</span><span class="fc-item-name">Hist&oacute;rico MAIKOS</span></div><div class="fc-item-metrics">Guarda el an&aacute;lisis en el dashboard principal para comparar la evoluci&oacute;n de la tesis con cada actualizaci&oacute;n de m&eacute;tricas.</div></div>
+  </div>
+  <div class="fc-note">El bot&oacute;n <strong>&ldquo;Descargar Bundle Completo&rdquo;</strong> usa la <strong style="color:var(--acc)">File System Access API</strong> para mostrar un selector de carpeta nativo del SO. En navegadores sin soporte, usa descarga directa como fallback.</div>
+</div>
+
+<div style="margin-top:40px;padding-top:20px;border-top:1px solid var(--bd)">
+  <div class="legend">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--acc)"></div>Flujo principal</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Punto de veto</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--acc2)"></div>Ajuste sectorial</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--pur)"></div>Skills instalados</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--yel)"></div>Score / decisi&oacute;n</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--ora)"></div>Nuevo en v3.0</div>
+  </div>
+  <div style="margin-top:12px;font-size:.63rem;color:var(--mut)">Bostgara &middot; Motor de An&aacute;lisis Fundamental v3.0 &middot; 10 perfiles &middot; 9 m&oacute;dulos &middot; DCF/MC &middot; PDF IA &middot; Claude Sonnet</div>
+</div>
+
+</div>
+</body>
+</html>
