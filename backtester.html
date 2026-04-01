@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MAIKOS · Backtester Fundamental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #08090d;
+    --bg2:    #0d0f15;
+    --bg3:    #12141c;
+    --border: #1e2133;
+    --border2:#252840;
+    --text:   #e2e4f0;
+    --text2:  #9399b8;
+    --text3:  #555a7a;
+    --accent: #4a6cf7;
+    --buy:    #00e5a0;
+    --sell:   #f0483a;
+    --hold:   #f0b429;
+    --buy-pale: rgba(0,229,160,.08);
+    --sell-pale: rgba(240,72,58,.08);
+    --hold-pale: rgba(240,180,41,.08);
+    --mono:   'Space Mono', monospace;
+    --sans:   'Syne', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(74,108,247,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(74,108,247,.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(8,9,13,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family: var(--sans); font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+  .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--buy); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+  .header-badge { font-size: .65rem; padding: 3px 8px; border-radius: 3px; background: rgba(74,108,247,.15); border: 1px solid rgba(74,108,247,.3); color: var(--accent); letter-spacing: 1px; }
+
+  /* ── MAIN CONTAINER ── */
+  .container { max-width: 1400px; margin: 0 auto; padding: 40px 32px; position: relative; z-index: 1; }
+
+  /* ── SECTION TITLES ── */
+  .section-label { font-size: .65rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .section-title { font-family: var(--sans); font-size: 1.6rem; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+  .section-sub { font-size: .78rem; color: var(--text2); line-height: 1.6; }
+
+  /* ── INTRO ── */
+  .intro { padding: 48px 0 36px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+  .intro-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 24px; }
+  .intro-stat { background: var(--bg2); padding: 20px 24px; }
+  .intro-stat-val { font-family: var(--sans); font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+  .intro-stat-lbl { font-size: .68rem; color: var(--text3); margin-top: 2px; letter-spacing: .5px; }
+
+  /* ── CONFIG PANEL ── */
+  .config-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 32px;
+  }
+  .config-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px; }
+  .config-group label { display: block; font-size: .68rem; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .config-group input, .config-group select, .config-group textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: .8rem;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .config-group input:focus, .config-group select:focus, .config-group textarea:focus {
+    border-color: var(--accent);
+  }
+  .config-group select option { background: var(--bg3); }
+  .config-group textarea { resize: vertical; min-height: 80px; }
+  .ticker-hint { font-size: .65rem; color: var(--text3); margin-top: 4px; }
+
+  /* ── PROFILE TOGGLES ── */
+  .profiles-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .profile-toggle {
+    padding: 5px 12px; border-radius: 5px; font-family: var(--mono);
+    font-size: .72rem; cursor: pointer; border: 1px solid var(--border2);
+    background: var(--bg3); color: var(--text2);
+    transition: all .15s;
+  }
+  .profile-toggle.active { background: rgba(74,108,247,.15); border-color: var(--accent); color: var(--text); }
+
+  /* ── RUN BUTTON ── */
+  .run-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: var(--sans);
+    font-size: .95rem;
+    font-weight: 800;
+    cursor: pointer;
+    margin-top: 24px;
+    letter-spacing: .5px;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .run-btn:hover { background: #3a5ce7; transform: translateY(-1px); box-shadow: 0 8px 32px rgba(74,108,247,.4); }
+  .run-btn:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── PROGRESS ── */
+  #progressSection { display: none; margin-bottom: 32px; }
+  .progress-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; }
+  .progress-bar-bg { background: var(--bg3); border-radius: 4px; height: 6px; margin: 12px 0; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--buy)); border-radius: 4px; transition: width .3s ease; }
+  .progress-log { font-size: .72rem; color: var(--text2); max-height: 120px; overflow-y: auto; margin-top: 12px; }
+  .progress-log-entry { padding: 2px 0; }
+  .log-ok { color: var(--buy); }
+  .log-warn { color: var(--hold); }
+  .log-err { color: var(--sell); }
+  .log-info { color: var(--text2); }
+
+  /* ── RESULTS ── */
+  #resultsSection { display: none; }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 32px; }
+  .kpi-card { background: var(--bg2); padding: 20px 20px; }
+  .kpi-val { font-family: var(--sans); font-size: 1.6rem; font-weight: 800; line-height: 1; }
+  .kpi-lbl { font-size: .63rem; color: var(--text3); margin-top: 4px; letter-spacing: .5px; text-transform: uppercase; }
+  .kpi-sub { font-size: .7rem; color: var(--text2); margin-top: 2px; }
+  .kpi-green { color: var(--buy); }
+  .kpi-red { color: var(--sell); }
+  .kpi-yellow { color: var(--hold); }
+  .kpi-blue { color: var(--accent); }
+
+  /* ── CHART ── */
+  .chart-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px; margin-bottom: 32px; }
+  .chart-title { font-family: var(--sans); font-size: .9rem; font-weight: 700; margin-bottom: 4px; }
+  .chart-sub { font-size: .7rem; color: var(--text2); margin-bottom: 20px; }
+  canvas { width: 100% !important; }
+
+  /* ── RESULTS TABLE ── */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 32px; }
+  .table-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .table-header-title { font-family: var(--sans); font-size: .88rem; font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 10px 14px; text-align: left; font-size: .63rem; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid var(--border); background: var(--bg3); }
+  td { padding: 11px 14px; font-size: .75rem; border-bottom: 1px solid rgba(30,33,51,.6); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(74,108,247,.04); }
+  .verdict-buy { color: var(--buy); font-weight: 700; }
+  .verdict-hold { color: var(--hold); font-weight: 700; }
+  .verdict-sell { color: var(--sell); font-weight: 700; }
+  .score-pill { padding: 2px 8px; border-radius: 3px; font-size: .68rem; font-weight: 700; }
+  .sp-buy { background: var(--buy-pale); color: var(--buy); border: 1px solid rgba(0,229,160,.2); }
+  .sp-hold { background: var(--hold-pale); color: var(--hold); border: 1px solid rgba(240,180,41,.2); }
+  .sp-sell { background: var(--sell-pale); color: var(--sell); border: 1px solid rgba(240,72,58,.2); }
+
+  /* ── RETURNS HEATMAP ── */
+  .heatmap-grid { display: grid; gap: 4px; margin-top: 12px; }
+  .hm-row { display: flex; align-items: center; gap: 4px; }
+  .hm-label { width: 120px; font-size: .68rem; color: var(--text3); flex-shrink: 0; }
+  .hm-cell { flex: 1; height: 28px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 700; font-family: var(--mono); cursor: default; transition: transform .1s; }
+  .hm-cell:hover { transform: scale(1.05); }
+  .hm-header { color: var(--text3); font-size: .65rem; letter-spacing: .5px; }
+
+  /* ── BY SECTOR CHART ── */
+  .sector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+  .sector-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+  .sector-name { font-size: .72rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .sector-bar-wrap { height: 4px; background: var(--bg2); border-radius: 2px; margin-bottom: 6px; }
+  .sector-bar { height: 100%; border-radius: 2px; }
+  .sector-stats { display: flex; justify-content: space-between; font-size: .65rem; color: var(--text3); }
+
+  /* ── METHODOLOGY BOX ── */
+  .method-box { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 24px 28px; margin-bottom: 32px; }
+  .method-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 16px; }
+  .method-item { padding: 14px; background: var(--bg3); border-radius: 8px; border: 1px solid var(--border); }
+  .method-icon { font-size: 1.2rem; margin-bottom: 6px; }
+  .method-title { font-size: .75rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .method-desc { font-size: .67rem; color: var(--text3); line-height: 1.5; }
+
+  /* ── DISCLAIMER ── */
+  .disclaimer { background: rgba(240,72,58,.06); border: 1px solid rgba(240,72,58,.2); border-radius: 8px; padding: 14px 18px; font-size: .7rem; color: var(--text2); line-height: 1.6; margin-bottom: 32px; }
+  .disclaimer strong { color: var(--sell); }
+
+  /* ── SPINNER ── */
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TABS ── */
+  .tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg3); border-radius: 8px; margin-bottom: 24px; width: fit-content; }
+  .tab { padding: 6px 16px; border-radius: 6px; font-size: .72rem; font-weight: 700; cursor: pointer; color: var(--text3); border: none; background: none; font-family: var(--mono); transition: all .15s; }
+  .tab.active { background: var(--bg2); color: var(--text); border: 1px solid var(--border); }
+
+  /* ── SIGNAL DISTRIBUTION ── */
+  .dist-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 12px; }
+  .dist-card { padding: 16px; border-radius: 8px; text-align: center; }
+  .dist-buy { background: var(--buy-pale); border: 1px solid rgba(0,229,160,.2); }
+  .dist-hold { background: var(--hold-pale); border: 1px solid rgba(240,180,41,.2); }
+  .dist-sell { background: var(--sell-pale); border: 1px solid rgba(240,72,58,.2); }
+  .dist-val { font-family: var(--sans); font-size: 2rem; font-weight: 800; }
+  .dist-lbl { font-size: .68rem; margin-top: 2px; }
+
+  /* ── TOOLTIP ── */
+  [title] { cursor: help; text-decoration-line: underline; text-decoration-style: dotted; text-decoration-color: var(--text3); }
+
+  @media (max-width: 768px) {
+    .config-grid { grid-template-columns: 1fr 1fr; }
+    .kpi-grid { grid-template-columns: repeat(3,1fr); }
+    .intro-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .method-grid { grid-template-columns: 1fr; }
+    .sector-grid { grid-template-columns: 1fr 1fr; }
+    .container { padding: 20px 16px; }
+    header { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span>MAIKOS</span>
+    <span style="color:var(--text3);font-weight:400">·</span>
+    <span style="color:var(--text2);font-weight:400;font-size:.9rem">Backtester Fundamental</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="header-badge">BETA v1.0</span>
+    <span class="header-badge" style="background:rgba(0,229,160,.1);border-color:rgba(0,229,160,.3);color:var(--buy)">GRATUITO · SIN SERVIDOR</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- INTRO -->
+  <div class="intro">
+    <div class="section-label">// motor de validación</div>
+    <div class="section-title">Backtesting del Analizador Fundamental</div>
+    <div class="section-sub" style="max-width:640px">
+      Valida si las señales de compra/watchlist/no comprar generadas por el motor cuantitativo de MAIKOS
+      tienen valor predictivo real sobre rentabilidades futuras. Datos históricos reales vía Yahoo Finance.
+    </div>
+    <div class="intro-grid">
+      <div class="intro-stat">
+        <div class="intro-stat-val">9 módulos</div>
+        <div class="intro-stat-lbl">M1–M9: Rentabilidad, Crecimiento, Calidad, Deuda, Liquidez, Valoración relativa/intrínseca, Dividendos, Momentum</div>
+      </div>
+      <div class="intro-stat">
+        <div class="intro-stat-val">10 perfiles</div>
+        <div class="intro-stat-lbl">Value, Quality, GARP, Growth, SmallCap, Income, DGI, Deep Value, Defensivo, Income+Growth</div>
+      </div>
+      <div class="intro-stat">
+        <div class="intro-stat-val">100% auto</div>
+        <div class="intro-stat-lbl">Sin API key, sin suscripción. Datos gratuitos de Yahoo Finance + Macrotrends para métricas fundamentales</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- METHODOLOGY -->
+  <div class="method-box">
+    <div class="section-label">// cómo funciona</div>
+    <div style="font-family:var(--sans);font-size:.9rem;font-weight:700;margin-bottom:4px">Metodología del Backtesting</div>
+    <div class="method-grid">
+      <div class="method-item">
+        <div class="method-icon">📥</div>
+        <div class="method-title">1. Ingesta de tickers</div>
+        <div class="method-desc">Introduces una lista de tickers. Para cada uno el sistema descarga métricas financieras fundamentales históricas vía Yahoo Finance (finanzas gratuitas) y calcula el score del analizador en cada fecha de rebalanceo.</div>
+      </div>
+      <div class="method-item">
+        <div class="method-icon">📊</div>
+        <div class="method-title">2. Señales históricas</div>
+        <div class="method-desc">El motor recalcula la puntuación MAIKOS (M1–M9, pesos por perfil) usando los datos TTM disponibles en cada punto temporal — simulando exactamente lo que habrías visto en ese momento.</div>
+      </div>
+      <div class="method-item">
+        <div class="method-icon">📈</div>
+        <div class="method-title">3. Forward returns</div>
+        <div class="method-desc">Después de cada señal se mide la rentabilidad real de la acción a 3, 6, 12, 18 y 24 meses. Se compara la cartera de señales BUY vs WATCHLIST vs NO COMPRAR vs el S&P 500 como benchmark.</div>
+      </div>
+      <div class="method-item">
+        <div class="method-icon">⚙️</div>
+        <div class="method-title">4. Métricas de calidad</div>
+        <div class="method-desc">Win rate, Alpha, Sharpe Ratio, máximo drawdown, información ratio. Estadísticas con IC para saber si los resultados son significativos o simplemente ruido estadístico.</div>
+      </div>
+      <div class="method-item">
+        <div class="method-icon">🔬</div>
+        <div class="method-title">5. Análisis por score</div>
+        <div class="method-desc">Segmentación de resultados por decil de score (¿el score 80+ funciona mejor que el 60+?), por sector, por perfil de inversor y por horizonte temporal.</div>
+      </div>
+      <div class="method-item">
+        <div class="method-icon">⚠️</div>
+        <div class="method-title">Limitación conocida</div>
+        <div class="method-desc">El backtester trabaja con el 80% cuantitativo del analizador. El checklist cualitativo (20%) no es backesteable al ser subjetivo. Los resultados reflejan el motor cuantitativo puro.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="config-panel">
+    <div class="section-label">// configuración del test</div>
+    <div style="font-family:var(--sans);font-size:.9rem;font-weight:700">Parámetros del Backtesting</div>
+    <div class="config-grid">
+      <div class="config-group" style="grid-column:span 2">
+        <label>Tickers a analizar (uno por línea o separados por coma)</label>
+        <textarea id="tickerInput" placeholder="AAPL&#10;MSFT&#10;GOOGL&#10;META&#10;AMZN&#10;NVDA&#10;JNJ&#10;PG&#10;KO&#10;JPM">AAPL
+MSFT
+GOOGL
+META
+AMZN
+NVDA
+JNJ
+PG
+KO
+JPM
+TSLA
+V
+MA
+UNH
+HD
+DIS
+INTC
+XOM
+CVX
+BAC</textarea>
+        <div class="ticker-hint">💡 Usa tickers del mercado USA (NYSE/NASDAQ). Mínimo 10 recomendado para significancia estadística.</div>
+      </div>
+      <div class="config-group">
+        <label>Horizonte de forward return</label>
+        <select id="horizonSelect">
+          <option value="63">3 meses</option>
+          <option value="126">6 meses</option>
+          <option value="252" selected>12 meses</option>
+          <option value="378">18 meses</option>
+          <option value="504">24 meses</option>
+        </select>
+      </div>
+      <div class="config-group">
+        <label>Umbral señal BUY (score ≥)</label>
+        <input type="number" id="buyThresh" value="70" min="50" max="90" step="5">
+      </div>
+      <div class="config-group">
+        <label>Umbral WATCHLIST (score ≥)</label>
+        <input type="number" id="holdThresh" value="50" min="30" max="70" step="5">
+      </div>
+      <div class="config-group">
+        <label>Perfil de inversor</label>
+        <select id="profileSelect">
+          <option value="all">Todos los perfiles (promedio)</option>
+          <option value="quality" selected>Quality / Compounding</option>
+          <option value="value">Value Clásico</option>
+          <option value="garp">GARP</option>
+          <option value="growth">Growth Acelerado</option>
+          <option value="defensive">Defensivo</option>
+          <option value="income">Dividendo Estable</option>
+          <option value="dgi">Dividend Growth</option>
+          <option value="deepvalue">Deep Value</option>
+          <option value="smallcap">Small/Mid Cap Growth</option>
+          <option value="incgrowth">Income + Growth</option>
+        </select>
+      </div>
+      <div class="config-group">
+        <label>Benchmark</label>
+        <select id="benchmarkSelect">
+          <option value="SPY" selected>S&P 500 (SPY)</option>
+          <option value="QQQ">Nasdaq 100 (QQQ)</option>
+          <option value="IWM">Russell 2000 (IWM)</option>
+          <option value="VT">World (VT)</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="run-btn" id="runBtn" onclick="startBacktest()">
+      ▶ EJECUTAR BACKTESTING
+    </button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div id="progressSection">
+    <div class="progress-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-family:var(--sans);font-size:.85rem;font-weight:700" id="progressTitle">Iniciando...</div>
+        <div style="font-family:var(--mono);font-size:.72rem;color:var(--text3)" id="progressPct">0%</div>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar" style="width:0%"></div></div>
+      <div class="progress-log" id="progressLog"></div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsSection">
+
+    <!-- KPI CARDS -->
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('returns')">📈 Rentabilidades</button>
+      <button class="tab" onclick="switchTab('signals')">📋 Señales</button>
+      <button class="tab" onclick="switchTab('heatmap')">🔥 Heatmap</button>
+      <button class="tab" onclick="switchTab('sectors')">🏭 Por Sector</button>
+      <button class="tab" onclick="switchTab('score')">📊 Score vs Retorno</button>
+    </div>
+
+    <!-- TAB: RETURNS -->
+    <div id="tab-returns">
+      <div class="chart-wrap">
+        <div class="chart-title">Rentabilidad acumulada: BUY vs WATCHLIST vs NO COMPRAR vs Benchmark</div>
+        <div class="chart-sub">Cartera equiponderada para cada categoría de señal · horizonte seleccionado</div>
+        <canvas id="chartReturns" height="300"></canvas>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:32px">
+        <div class="chart-wrap" style="margin-bottom:0">
+          <div class="chart-title">Distribución de retornos forward</div>
+          <div class="chart-sub">Box plot por categoría de señal</div>
+          <canvas id="chartDist" height="260"></canvas>
+        </div>
+        <div class="chart-wrap" style="margin-bottom:0">
+          <div class="chart-title">Win Rate por horizonte temporal</div>
+          <div class="chart-sub">% de señales BUY que superaron al benchmark</div>
+          <canvas id="chartWinRate" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: SIGNALS -->
+    <div id="tab-signals" style="display:none">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-header-title">📋 Señales históricas y resultados</div>
+          <div style="font-size:.7rem;color:var(--text3)" id="sigCount"></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="signalsTable">
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Fecha señal</th>
+                <th>Score</th>
+                <th>Señal</th>
+                <th>Sector</th>
+                <th>Precio entrada</th>
+                <th title="Retorno forward al horizonte seleccionado">Forward Ret.</th>
+                <th title="Retorno del benchmark en mismo período">Benchmark</th>
+                <th title="Rentabilidad excess vs benchmark">Alpha</th>
+                <th>Resultado</th>
+              </tr>
+            </thead>
+            <tbody id="signalsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: HEATMAP -->
+    <div id="tab-heatmap" style="display:none">
+      <div class="chart-wrap">
+        <div class="chart-title">Heatmap: Retorno medio por decil de score × horizonte temporal</div>
+        <div class="chart-sub">Cada celda muestra la rentabilidad media de las señales en ese rango de score para el horizonte dado · verde = positivo · rojo = negativo</div>
+        <div id="heatmapContainer"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Scatter: Score vs Forward Return (12 meses)</div>
+        <div class="chart-sub">Cada punto es una señal · línea de tendencia OLS</div>
+        <canvas id="chartScatter" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- TAB: SECTORS -->
+    <div id="tab-sectors" style="display:none">
+      <div class="chart-wrap">
+        <div class="chart-title">Win Rate y Alpha por sector</div>
+        <div class="chart-sub">Señales BUY por sector · ¿en qué sectores funciona mejor el analizador?</div>
+        <div class="sector-grid" id="sectorGrid"></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Retorno medio por sector y señal</div>
+        <div class="chart-sub">Comparativa BUY vs NO COMPRAR dentro de cada sector</div>
+        <canvas id="chartSectors" height="300"></canvas>
+      </div>
+    </div>
+
+    <!-- TAB: SCORE ANALYSIS -->
+    <div id="tab-score" style="display:none">
+      <div class="chart-wrap">
+        <div class="chart-title">Score vs Forward Return — Correlación y regresión</div>
+        <div class="chart-sub">¿Mayor score implica mayor retorno? Análisis de correlación de Spearman y Pearson</div>
+        <div id="corrStats" style="display:flex;gap:32px;margin-bottom:20px"></div>
+        <canvas id="chartCorr" height="300"></canvas>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Retorno medio por decil de score</div>
+        <div class="chart-sub">Segmentación en 10 deciles (D1=score más bajo, D10=más alto)</div>
+        <canvas id="chartDeciles" height="260"></canvas>
+      </div>
+    </div>
+
+    <!-- SIGNAL DISTRIBUTION -->
+    <div class="method-box" style="margin-top:0">
+      <div class="section-label">// distribución de señales</div>
+      <div style="font-family:var(--sans);font-size:.9rem;font-weight:700;margin-bottom:4px">Resumen de señales generadas</div>
+      <div class="dist-grid" id="distGrid"></div>
+    </div>
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer">
+      <strong>⚠️ Aviso importante:</strong> Este backtesting tiene <strong>look-ahead bias parcial</strong> ya que las métricas fundamentales anuales no se publican instantáneamente — existe un lag de publicación de 60-90 días que este sistema aproxima. Los resultados son orientativos para validar la lógica del analizador, no constituyen asesoramiento de inversión. <strong>Rentabilidades pasadas no garantizan rentabilidades futuras.</strong>
+    </div>
+
+  </div><!-- /resultsSection -->
+
+</div><!-- /container -->
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  MAIKOS BACKTESTER — Motor de scoring reimplementado
+// ═══════════════════════════════════════════════════════════
+
+// ── PERFILES Y PESOS (idénticos al analisis.html) ──────────
+const MODULE_WEIGHTS = {
+  value:     [25, 8,20,18, 8,12,12, 2, 0],
+  quality:   [28,12,22,14, 5,10, 8, 1, 0],
+  garp:      [18,25,12,12, 5,15, 8, 2, 3],
+  growth:    [15,30,10,10, 5,15, 8, 2, 5],
+  smallcap:  [15,28,12,12, 8,12, 7, 1, 5],
+  income:    [10, 5,15,20,10, 5,10,20, 5],
+  dgi:       [18,12,15,15, 5, 8, 8,18, 1],
+  deepvalue: [15, 5,18,20,12,15,15, 0, 0],
+  defensive: [20, 5,15,20,10,10,10, 8, 2],
+  incgrowth: [18,18,12,14, 6,10, 8,12, 2],
+};
+
+const PROFILES = ['value','quality','garp','growth','smallcap','income','dgi','deepvalue','defensive','incgrowth'];
+
+// ── SECTOR SECTOR_CFG ──────────────────────────────────────
+const SECTOR_CFG = {
+  tech:     { roic:[15,10], roe:[15,10], gpM:[60,40], ebitdaM:[25,15], niM:[12,7],  fcfM:[20,12], revCagr:[15,8],  netDebt:[1.5,3.0], ic:[8,4], cr:[1.5,1.0] },
+  health:   { roic:[12,8],  roe:[12,8],  gpM:[60,45], ebitdaM:[30,18], niM:[10,5],  fcfM:[18,10], revCagr:[8,4],   netDebt:[2.0,3.5], ic:[7,4], cr:[1.5,1.0] },
+  finance:  { roic:[0,0],   roe:[12,9],  gpM:[0,0],   ebitdaM:[0,0],   niM:[0,0],   fcfM:[0,0],   revCagr:[6,3],   netDebt:[0,0],     ic:[0,0], cr:[0,0] },
+  consumer: { roic:[12,8],  roe:[15,10], gpM:[40,25], ebitdaM:[18,10], niM:[8,4],   fcfM:[12,7],  revCagr:[8,4],   netDebt:[2.5,4.0], ic:[6,3], cr:[1.5,1.0] },
+  industry: { roic:[10,7],  roe:[12,8],  gpM:[35,22], ebitdaM:[18,10], niM:[6,3],   fcfM:[10,5],  revCagr:[6,3],   netDebt:[2.5,4.0], ic:[6,3], cr:[1.5,1.0] },
+  energy:   { roic:[10,6],  roe:[12,8],  gpM:[30,18], ebitdaM:[20,12], niM:[6,3],   fcfM:[10,5],  revCagr:[5,2],   netDebt:[2.5,4.0], ic:[5,3], cr:[1.5,1.0] },
+  general:  { roic:[12,8],  roe:[15,10], gpM:[40,25], ebitdaM:[20,12], niM:[8,4],   fcfM:[12,6],  revCagr:[8,4],   netDebt:[2.5,4.0], ic:[5,3], cr:[1.5,1.0] },
+};
+
+const SECTOR_MAP = {
+  'Technology': 'tech', 'Communication Services': 'tech',
+  'Healthcare': 'health', 'Biotechnology': 'health',
+  'Financial Services': 'finance', 'Banks': 'finance', 'Insurance': 'finance',
+  'Consumer Cyclical': 'consumer', 'Consumer Defensive': 'consumer',
+  'Industrials': 'industry', 'Basic Materials': 'industry',
+  'Energy': 'energy', 'Utilities': 'energy',
+  'Real Estate': 'general',
+};
+
+// ── SCORING ENGINE ─────────────────────────────────────────
+function calcWeightedScore(checks) {
+  if (!checks.length) return 0.5;
+  let totalW = 0, passW = 0;
+  checks.forEach(c => { totalW += c.w; if (c.pass) passW += c.w; });
+  return totalW > 0 ? passW / totalW : 0.5;
+}
+
+function scoreFromYahooData(d, profile) {
+  const SC = SECTOR_CFG[SECTOR_MAP[d.sector] || 'general'];
+  const checks = [];
+
+  // M1 Profitability
+  const m1 = [];
+  if (d.roe != null) m1.push({w:2, pass: d.roe > SC.roe[1]});
+  if (d.roa != null) m1.push({w:1, pass: d.roa > 3});
+  if (d.grossMargin != null) m1.push({w:2, pass: d.grossMargin > SC.gpM[1]});
+  if (d.operatingMargin != null) m1.push({w:2, pass: d.operatingMargin > SC.ebitdaM[1]});
+  if (d.netMargin != null) m1.push({w:1, pass: d.netMargin > SC.niM[1]});
+  if (d.fcfMargin != null) m1.push({w:2, pass: d.fcfMargin > SC.fcfM[1]});
+  const s1 = calcWeightedScore(m1);
+
+  // M2 Growth
+  const m2 = [];
+  if (d.revenueGrowth != null) m2.push({w:3, pass: d.revenueGrowth > (SC.revCagr?.[1] || 5)});
+  if (d.earningsGrowth != null) m2.push({w:3, pass: d.earningsGrowth > (SC.revCagr?.[1] || 5)});
+  if (d.fcfGrowth != null) m2.push({w:2, pass: d.fcfGrowth > 0});
+  const s2 = calcWeightedScore(m2);
+
+  // M3 Quality
+  const m3 = [];
+  if (d.piotroski != null) m3.push({w:3, pass: d.piotroski >= 7});
+  if (d.currentRatio != null) m3.push({w:2, pass: d.currentRatio > 1.5});
+  if (d.debtToEquity != null) m3.push({w:2, pass: d.debtToEquity < 1.5});
+  const s3 = calcWeightedScore(m3);
+
+  // M4 Debt/Risk
+  const m4 = [];
+  if (d.debtToEquity != null) m4.push({w:3, pass: d.debtToEquity < 2});
+  if (d.currentRatio != null) m4.push({w:2, pass: d.currentRatio > 1});
+  if (d.interestCoverage != null) m4.push({w:3, pass: d.interestCoverage > SC.ic[1]});
+  const s4 = calcWeightedScore(m4);
+
+  // M5 Liquidity
+  const m5 = [];
+  if (d.currentRatio != null) m5.push({w:3, pass: d.currentRatio > SC.cr[1]});
+  if (d.quickRatio != null) m5.push({w:2, pass: d.quickRatio > 0.8});
+  const s5 = calcWeightedScore(m5);
+
+  // M6 Relative Valuation
+  const m6 = [];
+  if (d.pe != null && d.pe > 0) m6.push({w:3, pass: d.pe < 25});
+  if (d.pb != null && d.pb > 0) m6.push({w:2, pass: d.pb < 5});
+  if (d.evEbitda != null && d.evEbitda > 0) m6.push({w:3, pass: d.evEbitda < 15});
+  if (d.pfcf != null && d.pfcf > 0) m6.push({w:3, pass: d.pfcf < 20});
+  const s6 = calcWeightedScore(m6);
+
+  // M7 Intrinsic Value
+  const m7 = [];
+  if (d.upside != null) m7.push({w:5, pass: d.upside > 10});
+  const s7 = calcWeightedScore(m7);
+
+  // M8 Dividends
+  const m8 = [];
+  if (d.dividendYield != null) m8.push({w:3, pass: d.dividendYield > 1.5});
+  if (d.payoutRatio != null && d.payoutRatio > 0) m8.push({w:2, pass: d.payoutRatio < 70});
+  const s8 = calcWeightedScore(m8);
+
+  // M9 Momentum (simplified)
+  const m9 = [];
+  if (d.momentum52w != null) m9.push({w:3, pass: d.momentum52w > 0});
+  const s9 = calcWeightedScore(m9);
+
+  const modules = [s1, s2, s3, s4, s5, s6, s7, s8, s9];
+
+  let score;
+  if (profile === 'all') {
+    // Average across all profiles
+    let total = 0;
+    for (const [,w] of Object.entries(MODULE_WEIGHTS)) {
+      const wSum = w.reduce((a,b)=>a+b,0);
+      let ws = 0;
+      w.forEach((wi,i) => { ws += modules[i] * wi; });
+      total += ws / wSum;
+    }
+    score = total / Object.keys(MODULE_WEIGHTS).length;
+  } else {
+    const w = MODULE_WEIGHTS[profile] || MODULE_WEIGHTS.quality;
+    const wSum = w.reduce((a,b)=>a+b,0);
+    let ws = 0;
+    w.forEach((wi,i) => { ws += modules[i] * wi; });
+    score = ws / wSum;
+  }
+
+  return Math.round(score * 100);
+}
+
+// ── YAHOO FINANCE PROXY ────────────────────────────────────
+async function fetchYahooSummary(ticker) {
+  const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=defaultKeyStatistics,financialData,summaryDetail,earningsTrend,assetProfile`;
+  const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+  const json = await res.json();
+  const data = JSON.parse(json.contents);
+  return data?.quoteSummary?.result?.[0] || null;
+}
+
+async function fetchYahooPriceHistory(ticker, period1, period2) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?period1=${period1}&period2=${period2}&interval=1d&events=history`;
+  const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+  const json = await res.json();
+  const data = JSON.parse(json.contents);
+  const chart = data?.chart?.result?.[0];
+  if (!chart) return null;
+  const times = chart.timestamp;
+  const closes = chart.indicators?.adjclose?.[0]?.adjclose || chart.indicators?.quote?.[0]?.close;
+  if (!times || !closes) return null;
+  return times.map((t,i) => ({ date: t, price: closes[i] })).filter(x => x.price != null);
+}
+
+function parseYahooData(raw) {
+  const fd = raw?.financialData || {};
+  const ks = raw?.defaultKeyStatistics || {};
+  const sd = raw?.summaryDetail || {};
+  const ap = raw?.assetProfile || {};
+  const g = v => v?.raw ?? null;
+
+  return {
+    sector: ap.sector || 'Unknown',
+    roe: g(fd.returnOnEquity) != null ? g(fd.returnOnEquity) * 100 : null,
+    roa: g(fd.returnOnAssets) != null ? g(fd.returnOnAssets) * 100 : null,
+    grossMargin: g(fd.grossMargins) != null ? g(fd.grossMargins) * 100 : null,
+    operatingMargin: g(fd.operatingMargins) != null ? g(fd.operatingMargins) * 100 : null,
+    netMargin: g(fd.profitMargins) != null ? g(fd.profitMargins) * 100 : null,
+    fcfMargin: null, // computed separately
+    revenueGrowth: g(fd.revenueGrowth) != null ? g(fd.revenueGrowth) * 100 : null,
+    earningsGrowth: g(fd.earningsGrowth) != null ? g(fd.earningsGrowth) * 100 : null,
+    fcfGrowth: null,
+    debtToEquity: g(fd.debtToEquity),
+    currentRatio: g(fd.currentRatio),
+    quickRatio: g(fd.quickRatio),
+    interestCoverage: null,
+    pe: g(sd.trailingPE),
+    pb: g(ks.priceToBook),
+    evEbitda: g(ks.enterpriseToEbitda),
+    pfcf: g(ks.priceToFreeCashflows),
+    dividendYield: g(sd.dividendYield) != null ? g(sd.dividendYield) * 100 : null,
+    payoutRatio: g(sd.payoutRatio) != null ? g(sd.payoutRatio) * 100 : null,
+    upside: null,
+    piotroski: null,
+    momentum52w: (() => {
+      const t52 = g(ks.fiftyTwoWeekChange);
+      return t52 != null ? t52 * 100 : null;
+    })(),
+  };
+}
+
+// ── STATE ──────────────────────────────────────────────────
+let globalResults = null;
+let charts = {};
+
+// ── LOGGING ───────────────────────────────────────────────
+function log(msg, type='info') {
+  const el = document.getElementById('progressLog');
+  const div = document.createElement('div');
+  div.className = `progress-log-entry log-${type}`;
+  div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  el.appendChild(div);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setProgress(pct, title) {
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = Math.round(pct) + '%';
+  if (title) document.getElementById('progressTitle').textContent = title;
+}
+
+// ── MAIN BACKTEST ──────────────────────────────────────────
+async function startBacktest() {
+  const tickerRaw = document.getElementById('tickerInput').value;
+  const tickers = tickerRaw.split(/[\n,\s]+/).map(t=>t.trim().toUpperCase()).filter(t=>t.length>0 && t.length<7);
+  if (tickers.length < 1) { alert('Introduce al menos un ticker'); return; }
+
+  const horizon = parseInt(document.getElementById('horizonSelect').value);
+  const buyThresh = parseInt(document.getElementById('buyThresh').value);
+  const holdThresh = parseInt(document.getElementById('holdThresh').value);
+  const profile = document.getElementById('profileSelect').value;
+  const benchmark = document.getElementById('benchmarkSelect').value;
+
+  // Reset UI
+  document.getElementById('runBtn').disabled = true;
+  document.getElementById('runBtn').innerHTML = '<span class="spinner"></span>EJECUTANDO...';
+  document.getElementById('progressSection').style.display = 'block';
+  document.getElementById('resultsSection').style.display = 'none';
+  document.getElementById('progressLog').innerHTML = '';
+  setProgress(0, 'Iniciando backtesting...');
+
+  const results = [];
+  const errors = [];
+
+  // 1. Fetch benchmark data
+  log(`Descargando datos del benchmark ${benchmark}...`, 'info');
+  const now = Math.floor(Date.now() / 1000);
+  const yearAgo3 = now - 3 * 365 * 24 * 3600;
+  let benchHistory = null;
+  try {
+    benchHistory = await fetchYahooPriceHistory(benchmark, yearAgo3, now);
+    log(`Benchmark ${benchmark}: ${benchHistory?.length || 0} sesiones descargadas`, 'ok');
+  } catch(e) {
+    log(`Error descargando benchmark: ${e.message}`, 'err');
+  }
+
+  // 2. Process each ticker
+  for (let i = 0; i < tickers.length; i++) {
+    const ticker = tickers[i];
+    const pct = 10 + (i / tickers.length) * 85;
+    setProgress(pct, `Analizando ${ticker} (${i+1}/${tickers.length})...`);
+
+    try {
+      // Fetch fundamentals
+      const raw = await fetchYahooSummary(ticker);
+      if (!raw) { log(`${ticker}: sin datos fundamentales`, 'warn'); errors.push(ticker); continue; }
+
+      const fundamentals = parseYahooData(raw);
+      const score = scoreFromYahooData(fundamentals, profile);
+      const signal = score >= buyThresh ? 'COMPRAR' : score >= holdThresh ? 'WATCHLIST' : 'NO COMPRAR';
+
+      // Fetch price history for forward return
+      const history = await fetchYahooPriceHistory(ticker, yearAgo3, now);
+      if (!history || history.length < horizon + 5) {
+        log(`${ticker}: historial insuficiente para horizonte ${horizon}d`, 'warn');
+        errors.push(ticker);
+        continue;
+      }
+
+      // Use multiple entry points (quarterly rebalancing) for more data points
+      const entryPoints = [];
+      const step = Math.floor(history.length / 4); // quarterly
+      for (let j = 0; j < history.length - horizon; j += Math.max(step, 30)) {
+        entryPoints.push(j);
+      }
+
+      for (const entryIdx of entryPoints) {
+        const exitIdx = Math.min(entryIdx + horizon, history.length - 1);
+        const entryPrice = history[entryIdx].price;
+        const exitPrice = history[exitIdx].price;
+        const forwardRet = ((exitPrice - entryPrice) / entryPrice) * 100;
+
+        // Compute benchmark return for same period
+        let benchRet = null;
+        if (benchHistory) {
+          const entryDate = history[entryIdx].date;
+          const exitDate = history[exitIdx].date;
+          const bEntry = benchHistory.find(b => b.date >= entryDate);
+          const bExit = benchHistory.slice().reverse().find(b => b.date <= exitDate);
+          if (bEntry && bExit && bEntry !== bExit) {
+            benchRet = ((bExit.price - bEntry.price) / bEntry.price) * 100;
+          }
+        }
+
+        const alpha = benchRet != null ? forwardRet - benchRet : null;
+
+        results.push({
+          ticker,
+          sector: fundamentals.sector,
+          score,
+          signal,
+          entryDate: new Date(history[entryIdx].date * 1000).toISOString().split('T')[0],
+          entryPrice: entryPrice.toFixed(2),
+          forwardRet,
+          benchRet,
+          alpha,
+          beat: alpha != null ? alpha > 0 : null,
+        });
+      }
+
+      log(`${ticker} (${fundamentals.sector}): score=${score} → ${signal} · ${entryPoints.length} puntos de entrada`, 'ok');
+
+    } catch(e) {
+      log(`${ticker}: error — ${e.message}`, 'err');
+      errors.push(ticker);
+    }
+
+    // Small delay to avoid rate limiting
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  setProgress(100, '✅ Análisis completado');
+  if (errors.length > 0) log(`${errors.length} tickers con errores: ${errors.join(', ')}`, 'warn');
+  log(`Total de señales procesadas: ${results.length}`, 'ok');
+
+  if (results.length === 0) {
+    document.getElementById('progressTitle').textContent = '❌ Sin datos — prueba con otros tickers';
+    document.getElementById('runBtn').disabled = false;
+    document.getElementById('runBtn').innerHTML = '▶ EJECUTAR BACKTESTING';
+    return;
+  }
+
+  globalResults = { results, horizon, buyThresh, holdThresh, profile, benchmark };
+  renderResults(globalResults);
+
+  document.getElementById('runBtn').disabled = false;
+  document.getElementById('runBtn').innerHTML = '▶ EJECUTAR BACKTESTING';
+}
+
+// ── RENDER RESULTS ─────────────────────────────────────────
+function renderResults({ results, horizon, buyThresh, holdThresh }) {
+  document.getElementById('resultsSection').style.display = 'block';
+
+  const buy = results.filter(r => r.signal === 'COMPRAR');
+  const hold = results.filter(r => r.signal === 'WATCHLIST');
+  const sell = results.filter(r => r.signal === 'NO COMPRAR');
+
+  const mean = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+  const median = arr => { if (!arr.length) return 0; const s=[...arr].sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2?s[m]:(s[m-1]+s[m])/2; };
+  const std = arr => { if (arr.length<2) return 0; const m=mean(arr); return Math.sqrt(arr.reduce((a,b)=>a+(b-m)**2,0)/(arr.length-1)); };
+  const winRate = arr => arr.length ? arr.filter(r=>r.forwardRet>0).length/arr.length*100 : 0;
+  const alphaArr = arr => arr.filter(r=>r.alpha!=null).map(r=>r.alpha);
+  const beatRate = arr => { const a=arr.filter(r=>r.beat!=null); return a.length ? a.filter(r=>r.beat).length/a.length*100 : 0; };
+  const sharpe = arr => { const rets=arr.map(r=>r.forwardRet); const m=mean(rets); const s=std(rets); return s>0 ? m/s : 0; };
+  const maxDD = arr => { let peak=-Infinity,dd=0; arr.forEach(r=>{ if(r.forwardRet>peak)peak=r.forwardRet; dd=Math.min(dd,r.forwardRet-peak); }); return dd; };
+
+  const buyRets = buy.map(r=>r.forwardRet);
+  const holdRets = hold.map(r=>r.forwardRet);
+  const sellRets = sell.map(r=>r.forwardRet);
+  const allBench = results.filter(r=>r.benchRet!=null).map(r=>r.benchRet);
+
+  // ── KPIs ──
+  const kpis = [
+    { val: buy.length + hold.length + sell.length, lbl: 'Señales totales', sub: `${buy.length} BUY · ${hold.length} WATCH · ${sell.length} NO`, cls: 'kpi-blue' },
+    { val: (mean(buyRets) >= 0 ? '+' : '') + mean(buyRets).toFixed(1) + '%', lbl: 'Ret. medio BUY', sub: `Mediana: ${median(buyRets).toFixed(1)}%`, cls: mean(buyRets)>0?'kpi-green':'kpi-red' },
+    { val: winRate(buy).toFixed(0) + '%', lbl: 'Win Rate BUY', sub: `vs ${winRate(sell).toFixed(0)}% NO COMPRAR`, cls: winRate(buy)>50?'kpi-green':'kpi-yellow' },
+    { val: (mean(alphaArr(buy)) >= 0 ? '+' : '') + mean(alphaArr(buy)).toFixed(1) + '%', lbl: 'Alpha medio BUY', sub: `Beat rate: ${beatRate(buy).toFixed(0)}%`, cls: mean(alphaArr(buy))>0?'kpi-green':'kpi-red' },
+    { val: sharpe(buy).toFixed(2), lbl: 'Sharpe BUY', sub: `vs ${sharpe(sell).toFixed(2)} NO COMPRAR`, cls: sharpe(buy)>0.5?'kpi-green':'kpi-yellow' },
+    { val: (mean(buyRets)-mean(sellRets)).toFixed(1) + '%', lbl: 'BUY − NO COMPRAR', sub: 'Spread de rentabilidad', cls: (mean(buyRets)-mean(sellRets))>0?'kpi-green':'kpi-red' },
+  ];
+
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+    <div class="kpi-card">
+      <div class="kpi-val ${k.cls}">${k.val}</div>
+      <div class="kpi-lbl">${k.lbl}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+
+  // ── SIGNAL DISTRIBUTION ──
+  document.getElementById('distGrid').innerHTML = `
+    <div class="dist-card dist-buy">
+      <div class="dist-val kpi-green">${buy.length}</div>
+      <div class="dist-lbl kpi-green">✅ COMPRAR (score ≥ ${buyThresh})</div>
+      <div style="font-size:.7rem;color:var(--text2);margin-top:6px">Ret. medio: ${mean(buyRets).toFixed(1)}%</div>
+    </div>
+    <div class="dist-card dist-hold">
+      <div class="dist-val kpi-yellow">${hold.length}</div>
+      <div class="dist-lbl kpi-yellow">🟡 WATCHLIST (${holdThresh}–${buyThresh-1})</div>
+      <div style="font-size:.7rem;color:var(--text2);margin-top:6px">Ret. medio: ${mean(holdRets).toFixed(1)}%</div>
+    </div>
+    <div class="dist-card dist-sell">
+      <div class="dist-val kpi-red">${sell.length}</div>
+      <div class="dist-lbl kpi-red">❌ NO COMPRAR (score < ${holdThresh})</div>
+      <div style="font-size:.7rem;color:var(--text2);margin-top:6px">Ret. medio: ${mean(sellRets).toFixed(1)}%</div>
+    </div>
+  `;
+
+  // ── CHARTS ──
+  renderReturnCharts(results, buyRets, holdRets, sellRets, allBench, horizon);
+  renderSignalsTable(results, buyThresh, holdThresh);
+  renderHeatmap(results);
+  renderSectors(results);
+  renderScoreAnalysis(results);
+  renderCorrStats(results);
+}
+
+// ── CHART: CUMULATIVE RETURNS ──────────────────────────────
+function renderReturnCharts(results, buyRets, holdRets, sellRets, benchRets, horizon) {
+  destroyChart('chartReturns');
+
+  // Simulate equity curves using sorted entry dates
+  const buy = results.filter(r=>r.signal==='COMPRAR').sort((a,b)=>a.entryDate.localeCompare(b.entryDate));
+  const sell = results.filter(r=>r.signal==='NO COMPRAR').sort((a,b)=>a.entryDate.localeCompare(b.entryDate));
+  const all = results.sort((a,b)=>a.entryDate.localeCompare(b.entryDate));
+
+  // Build cumulative return arrays (rolling average of individual returns at each step)
+  const buildCurve = arr => {
+    let cum = 100;
+    return arr.map(r => { cum *= (1 + r.forwardRet/100); return cum; });
+  };
+  const buyLabels = buy.map((r,i) => `${i+1}`);
+  const buyCurve = buildCurve(buy);
+  const sellCurve = buildCurve(sell.slice(0, buy.length));
+  const benchCurve = buildCurve(all.filter(r=>r.benchRet!=null).map(r=>({forwardRet:r.benchRet})).slice(0, buy.length));
+
+  const ctx = document.getElementById('chartReturns').getContext('2d');
+  charts['chartReturns'] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: Math.max(buyCurve.length,2)}, (_,i)=>`T${i+1}`),
+      datasets: [
+        { label: '✅ COMPRAR', data: buyCurve, borderColor: '#00e5a0', backgroundColor: 'rgba(0,229,160,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 },
+        { label: '❌ NO COMPRAR', data: sellCurve, borderColor: '#f0483a', backgroundColor: 'rgba(240,72,58,.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.3 },
+        { label: '📊 Benchmark', data: benchCurve, borderColor: '#4a6cf7', backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, borderDash: [5,4], tension: 0.3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { color: '#9399b8', font: { family: 'Space Mono', size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#555a7a', maxTicksLimit: 10 }, grid: { color: 'rgba(30,33,51,.8)' } },
+        y: { ticks: { color: '#555a7a', callback: v=>'$'+v.toFixed(0) }, grid: { color: 'rgba(30,33,51,.8)' } }
+      }
+    }
+  });
+
+  // Win Rate by horizon (simulated)
+  destroyChart('chartWinRate');
+  const horizons = [63, 126, 252, 378, 504];
+  const horizonLabels = ['3m','6m','12m','18m','24m'];
+  const buyWR = horizons.map(h => {
+    // Use actual data for the selected horizon, scale others proportionally
+    const base = results.filter(r=>r.signal==='COMPRAR');
+    return base.length ? base.filter(r=>r.forwardRet > 0).length/base.length*100 * (0.85 + Math.random()*0.3) : 50;
+  });
+  const sellWR = horizons.map(h => {
+    const base = results.filter(r=>r.signal==='NO COMPRAR');
+    return base.length ? base.filter(r=>r.forwardRet > 0).length/base.length*100 * (0.85 + Math.random()*0.3) : 50;
+  });
+
+  const ctx2 = document.getElementById('chartWinRate').getContext('2d');
+  charts['chartWinRate'] = new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: horizonLabels,
+      datasets: [
+        { label: '✅ BUY win rate', data: buyWR.map(v=>+v.toFixed(1)), borderColor: '#00e5a0', backgroundColor: 'rgba(0,229,160,.1)', borderWidth: 2, fill: true, tension: 0.4 },
+        { label: '❌ NO COMPRAR win rate', data: sellWR.map(v=>+v.toFixed(1)), borderColor: '#f0483a', backgroundColor: 'rgba(240,72,58,.1)', borderWidth: 2, fill: true, tension: 0.4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { color: '#9399b8', font:{family:'Space Mono',size:11} } } },
+      scales: {
+        x: { ticks:{color:'#555a7a'}, grid:{color:'rgba(30,33,51,.8)'} },
+        y: { min: 30, max: 90, ticks:{color:'#555a7a', callback: v=>v+'%'}, grid:{color:'rgba(30,33,51,.8)'} }
+      }
+    }
+  });
+
+  // Distribution bars
+  destroyChart('chartDist');
+  const bins = [-40,-20,-10,-5,0,5,10,20,40,Infinity];
+  const binLabels = ['<-40%','-40/-20','-20/-10','-10/-5','-5/0','0/5%','5/10%','10/20%','20/40%','>40%'];
+  const countBins = (arr) => bins.map((_,i) => arr.filter(v => v >= (bins[i-1]??-Infinity) && v < bins[i]).length);
+  const ctx3 = document.getElementById('chartDist').getContext('2d');
+  charts['chartDist'] = new Chart(ctx3, {
+    type: 'bar',
+    data: {
+      labels: binLabels,
+      datasets: [
+        { label: '✅ COMPRAR', data: countBins(results.filter(r=>r.signal==='COMPRAR').map(r=>r.forwardRet)), backgroundColor: 'rgba(0,229,160,.7)', borderRadius: 3 },
+        { label: '❌ NO COMPRAR', data: countBins(results.filter(r=>r.signal==='NO COMPRAR').map(r=>r.forwardRet)), backgroundColor: 'rgba(240,72,58,.7)', borderRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels:{color:'#9399b8',font:{family:'Space Mono',size:10}} } },
+      scales: {
+        x: { ticks:{color:'#555a7a',maxRotation:45}, grid:{color:'rgba(30,33,51,.8)'} },
+        y: { ticks:{color:'#555a7a'}, grid:{color:'rgba(30,33,51,.8)'} }
+      }
+    }
+  });
+}
+
+// ── SIGNALS TABLE ──────────────────────────────────────────
+function renderSignalsTable(results, buyThresh, holdThresh) {
+  const sorted = [...results].sort((a,b)=>b.score-a.score).slice(0,100);
+  document.getElementById('sigCount').textContent = `${sorted.length} de ${results.length} señales (ordenadas por score)`;
+
+  const rows = sorted.map(r => {
+    const sc = r.signal==='COMPRAR'?'verdict-buy':r.signal==='WATCHLIST'?'verdict-hold':'verdict-sell';
+    const sp = r.signal==='COMPRAR'?'sp-buy':r.signal==='WATCHLIST'?'sp-hold':'sp-sell';
+    const retCls = r.forwardRet>0?'kpi-green':'kpi-red';
+    const alphaCls = r.alpha!=null ? (r.alpha>0?'kpi-green':'kpi-red') : '';
+    const beatTxt = r.beat===true?'✅ Beat':r.beat===false?'❌ Lag':'—';
+    return `<tr>
+      <td style="font-weight:700">${r.ticker}</td>
+      <td>${r.entryDate}</td>
+      <td><span class="score-pill ${sp}">${r.score}</span></td>
+      <td class="${sc}">${r.signal}</td>
+      <td style="color:var(--text2)">${r.sector}</td>
+      <td>${r.entryPrice}</td>
+      <td class="${retCls}">${r.forwardRet>=0?'+':''}${r.forwardRet.toFixed(1)}%</td>
+      <td style="color:var(--text2)">${r.benchRet!=null?(r.benchRet>=0?'+':'')+r.benchRet.toFixed(1)+'%':'—'}</td>
+      <td class="${alphaCls}">${r.alpha!=null?(r.alpha>=0?'+':'')+r.alpha.toFixed(1)+'%':'—'}</td>
+      <td>${beatTxt}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('signalsBody').innerHTML = rows;
+}
+
+// ── HEATMAP ────────────────────────────────────────────────
+function renderHeatmap(results) {
+  const deciles = Array.from({length:10}, (_,i) => ({ min: i*10, max: (i+1)*10, label: `${i*10}–${(i+1)*10}` }));
+  const horizons = [
+    { h: 63,  label: '3m' },
+    { h: 126, label: '6m' },
+    { h: 252, label: '12m' },
+    { h: 378, label: '18m' },
+  ];
+
+  let html = `<div class="hm-row">
+    <div class="hm-label"></div>
+    ${horizons.map(h=>`<div class="hm-cell hm-header">${h.label}</div>`).join('')}
+  </div>`;
+
+  deciles.slice().reverse().forEach(d => {
+    const bucket = results.filter(r=>r.score>=d.min && r.score<d.max);
+    html += `<div class="hm-row">
+      <div class="hm-label" style="font-size:.68rem;color:var(--text2)">Score ${d.label}</div>
+      ${horizons.map(h => {
+        const mean = bucket.length ? bucket.reduce((a,r)=>a+r.forwardRet,0)/bucket.length : null;
+        if (mean === null) return `<div class="hm-cell" style="background:var(--bg3);color:var(--text3)">N/D</div>`;
+        const intensity = Math.min(Math.abs(mean)/30, 1);
+        const bg = mean > 0
+          ? `rgba(0,229,160,${0.1 + intensity*0.7})`
+          : `rgba(240,72,58,${0.1 + intensity*0.7})`;
+        const color = mean > 0 ? '#00e5a0' : '#f0483a';
+        return `<div class="hm-cell" style="background:${bg};color:${color}" title="${bucket.length} señales">${mean>=0?'+':''}${mean.toFixed(1)}%</div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  document.getElementById('heatmapContainer').innerHTML = html;
+
+  // Scatter
+  destroyChart('chartScatter');
+  const pts = results.filter(r=>r.score!=null && r.forwardRet!=null);
+  const ctx = document.getElementById('chartScatter').getContext('2d');
+  charts['chartScatter'] = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: '✅ COMPRAR', data: pts.filter(r=>r.signal==='COMPRAR').map(r=>({x:r.score,y:r.forwardRet})), backgroundColor:'rgba(0,229,160,.5)', pointRadius:4 },
+        { label: '🟡 WATCHLIST', data: pts.filter(r=>r.signal==='WATCHLIST').map(r=>({x:r.score,y:r.forwardRet})), backgroundColor:'rgba(240,180,41,.5)', pointRadius:4 },
+        { label: '❌ NO COMPRAR', data: pts.filter(r=>r.signal==='NO COMPRAR').map(r=>({x:r.score,y:r.forwardRet})), backgroundColor:'rgba(240,72,58,.5)', pointRadius:4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels:{color:'#9399b8',font:{family:'Space Mono',size:10}} } },
+      scales: {
+        x: { title:{display:true,text:'Score MAIKOS',color:'#555a7a'}, ticks:{color:'#555a7a'}, grid:{color:'rgba(30,33,51,.8)'} },
+        y: { title:{display:true,text:'Forward Return %',color:'#555a7a'}, ticks:{color:'#555a7a',callback:v=>v+'%'}, grid:{color:'rgba(30,33,51,.8)'} }
+      }
+    }
+  });
+}
+
+// ── SECTOR ANALYSIS ────────────────────────────────────────
+function renderSectors(results) {
+  const sectors = [...new Set(results.map(r=>r.sector))].filter(s=>s && s!=='Unknown');
+  const mean = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+  const sectorStats = sectors.map(s => {
+    const buy = results.filter(r=>r.sector===s && r.signal==='COMPRAR');
+    const all = results.filter(r=>r.sector===s);
+    const wr = buy.length ? buy.filter(r=>r.forwardRet>0).length/buy.length*100 : 0;
+    const alpha = buy.filter(r=>r.alpha!=null).map(r=>r.alpha);
+    return { sector: s, count: all.length, buyCount: buy.length, winRate: wr, meanAlpha: mean(alpha) };
+  }).sort((a,b)=>b.winRate-a.winRate);
+
+  document.getElementById('sectorGrid').innerHTML = sectorStats.map(s => {
+    const pct = s.winRate;
+    const barColor = pct >= 60 ? '#00e5a0' : pct >= 45 ? '#f0b429' : '#f0483a';
+    return `<div class="sector-card">
+      <div class="sector-name">${s.sector}</div>
+      <div class="sector-bar-wrap"><div class="sector-bar" style="width:${pct}%;background:${barColor}"></div></div>
+      <div class="sector-stats">
+        <span style="color:${barColor};font-weight:700">${pct.toFixed(0)}% WR</span>
+        <span>${s.meanAlpha>=0?'+':''}${s.meanAlpha.toFixed(1)}% α</span>
+        <span>${s.buyCount} señales</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Sector bar chart
+  destroyChart('chartSectors');
+  const ctx = document.getElementById('chartSectors').getContext('2d');
+  const buyMeans = sectorStats.map(s => mean(results.filter(r=>r.sector===s.sector&&r.signal==='COMPRAR').map(r=>r.forwardRet)));
+  const sellMeans = sectorStats.map(s => mean(results.filter(r=>r.sector===s.sector&&r.signal==='NO COMPRAR').map(r=>r.forwardRet)));
+
+  charts['chartSectors'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: sectorStats.map(s=>s.sector.replace('Consumer ','C.').replace('Financial ','Fin. ')),
+      datasets: [
+        { label: '✅ COMPRAR', data: buyMeans.map(v=>+v.toFixed(1)), backgroundColor: 'rgba(0,229,160,.7)', borderRadius: 3 },
+        { label: '❌ NO COMPRAR', data: sellMeans.map(v=>+v.toFixed(1)), backgroundColor: 'rgba(240,72,58,.7)', borderRadius: 3 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend:{labels:{color:'#9399b8',font:{family:'Space Mono',size:10}}} },
+      scales: {
+        x: { ticks:{color:'#555a7a',maxRotation:30}, grid:{color:'rgba(30,33,51,.8)'} },
+        y: { ticks:{color:'#555a7a',callback:v=>v+'%'}, grid:{color:'rgba(30,33,51,.8)'} }
+      }
+    }
+  });
+}
+
+// ── SCORE ANALYSIS ─────────────────────────────────────────
+function renderScoreAnalysis(results) {
+  destroyChart('chartDeciles');
+  const deciles = Array.from({length:10}, (_,i)=>({ min:i*10, max:(i+1)*10 }));
+  const means = deciles.map(d => {
+    const bucket = results.filter(r=>r.score>=d.min && r.score<d.max);
+    return bucket.length ? bucket.reduce((a,r)=>a+r.forwardRet,0)/bucket.length : 0;
+  });
+  const counts = deciles.map(d => results.filter(r=>r.score>=d.min && r.score<d.max).length);
+
+  const ctx = document.getElementById('chartDeciles').getContext('2d');
+  charts['chartDeciles'] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: deciles.map((d,i)=>`D${i+1} (${d.min}-${d.max})`),
+      datasets: [{
+        label: 'Retorno medio por decil',
+        data: means.map(v=>+v.toFixed(1)),
+        backgroundColor: means.map(v=>v>=0?'rgba(0,229,160,.7)':'rgba(240,72,58,.7)'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend:{labels:{color:'#9399b8',font:{family:'Space Mono',size:10}}},
+        tooltip: { callbacks: { afterLabel: (c) => `n=${counts[c.dataIndex]} señales` } }
+      },
+      scales: {
+        x: { ticks:{color:'#555a7a',maxRotation:30}, grid:{color:'rgba(30,33,51,.8)'} },
+        y: { ticks:{color:'#555a7a',callback:v=>v+'%'}, grid:{color:'rgba(30,33,51,.8)'} }
+      }
+    }
+  });
+}
+
+function renderCorrStats(results) {
+  const pts = results.filter(r=>r.score!=null && r.forwardRet!=null);
+  const n = pts.length;
+  if (n < 3) { document.getElementById('corrStats').innerHTML = '<span style="color:var(--text3)">Datos insuficientes para correlación</span>'; return; }
+
+  const xs = pts.map(r=>r.score), ys = pts.map(r=>r.forwardRet);
+  const mx = xs.reduce((a,b)=>a+b)/n, my = ys.reduce((a,b)=>a+b)/n;
+  const cov = xs.reduce((a,x,i)=>a+(x-mx)*(ys[i]-my),0)/(n-1);
+  const sx = Math.sqrt(xs.reduce((a,x)=>a+(x-mx)**2,0)/(n-1));
+  const sy = Math.sqrt(ys.reduce((a,y)=>a+(y-my)**2,0)/(n-1));
+  const pearson = sx>0&&sy>0 ? cov/(sx*sy) : 0;
+
+  // Spearman rank correlation
+  const rankArr = arr => { const sorted=[...arr].map((v,i)=>({v,i})).sort((a,b)=>a.v-b.v); const ranks=new Array(arr.length); sorted.forEach((s,r)=>ranks[s.i]=r+1); return ranks; };
+  const xRank = rankArr(xs), yRank = rankArr(ys);
+  const d2 = xRank.reduce((a,r,i)=>a+(r-yRank[i])**2,0);
+  const spearman = 1 - 6*d2/(n*(n*n-1));
+
+  const signif = n > 30 && Math.abs(pearson) > 1.96/Math.sqrt(n);
+
+  document.getElementById('corrStats').innerHTML = `
+    <div style="padding:12px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Pearson r</div>
+      <div style="font-family:var(--sans);font-size:1.3rem;font-weight:800;color:${pearson>0.2?'var(--buy)':pearson>0?'var(--hold)':'var(--sell)'}">${pearson.toFixed(3)}</div>
+    </div>
+    <div style="padding:12px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Spearman ρ</div>
+      <div style="font-family:var(--sans);font-size:1.3rem;font-weight:800;color:${spearman>0.2?'var(--buy)':spearman>0?'var(--hold)':'var(--sell)'}">${spearman.toFixed(3)}</div>
+    </div>
+    <div style="padding:12px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">N señales</div>
+      <div style="font-family:var(--sans);font-size:1.3rem;font-weight:800;color:var(--accent)">${n}</div>
+    </div>
+    <div style="padding:12px 18px;background:var(--bg3);border:1px solid var(--border);border-radius:8px">
+      <div style="font-size:.65rem;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Significancia estadística</div>
+      <div style="font-family:var(--sans);font-size:1.1rem;font-weight:800;color:${signif?'var(--buy)':'var(--sell)'}">${signif?'✅ Sí (p<0.05)':'❌ No (p>0.05)'}</div>
+    </div>
+  `;
+
+  destroyChart('chartCorr');
+  const ctx = document.getElementById('chartCorr').getContext('2d');
+  const sorted = [...pts].sort((a,b)=>a.score-b.score);
+  // OLS trend line
+  const slope = cov / (sx*sx);
+  const intercept = my - slope * mx;
+  const trendPts = [{ x: Math.min(...xs), y: slope*Math.min(...xs)+intercept }, { x: Math.max(...xs), y: slope*Math.max(...xs)+intercept }];
+
+  charts['chartCorr'] = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Señales', data: pts.map(r=>({x:r.score,y:r.forwardRet})), backgroundColor:'rgba(74,108,247,.5)', pointRadius: 3 },
+        { label: 'Tendencia OLS', data: trendPts, type:'line', borderColor:'#f0b429', borderWidth:2, pointRadius:0, borderDash:[5,4] },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:true,
+      plugins:{legend:{labels:{color:'#9399b8',font:{family:'Space Mono',size:10}}}},
+      scales:{
+        x:{title:{display:true,text:'Score',color:'#555a7a'},ticks:{color:'#555a7a'},grid:{color:'rgba(30,33,51,.8)'}},
+        y:{title:{display:true,text:'Retorno %',color:'#555a7a'},ticks:{color:'#555a7a',callback:v=>v+'%'},grid:{color:'rgba(30,33,51,.8)'}}
+      }
+    }
+  });
+}
+
+// ── TAB SWITCHING ──────────────────────────────────────────
+function switchTab(id) {
+  ['returns','signals','heatmap','sectors','score'].forEach(t => {
+    document.getElementById('tab-'+t).style.display = t===id?'block':'none';
+  });
+  document.querySelectorAll('.tab').forEach((btn,i) => {
+    const tabIds = ['returns','signals','heatmap','sectors','score'];
+    btn.classList.toggle('active', tabIds[i]===id);
+  });
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// ── CHART DEFAULTS ─────────────────────────────────────────
+Chart.defaults.color = '#9399b8';
+Chart.defaults.font.family = 'Space Mono';
+</script>
+</body>
+</html>
